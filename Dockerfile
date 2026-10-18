@@ -11,9 +11,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /Bangumi_Auto_Rename
 
-# Use an architecture-independent Debian mirror (supports amd64/arm64).
-RUN echo "deb https://mirrors.aliyun.com/debian/ bullseye main non-free contrib" > /etc/apt/sources.list \
-    && apt-get update \
+# Use the base image's multi-arch Debian sources (main + updates + security).
+# Overriding them with a single mirror can pin mismatched package versions.
+RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         python-is-python3 \

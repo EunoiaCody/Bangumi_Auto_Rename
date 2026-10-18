@@ -7,40 +7,11 @@ LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
 LABEL org.opencontainers.image.source="https://github.com/EunoiaCody/Bangumi_Auto_Rename"
 
 ENV TZ=Asia/Shanghai
-ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /Bangumi_Auto_Rename
 
-# Use a multi-arch Debian mirror with main + updates + security. Keeping all
-# three components avoids perl/perl-base version mismatches.
-RUN printf '%s\n' \
-        "deb https://mirrors.aliyun.com/debian/ bullseye main contrib non-free" \
-        "deb https://mirrors.aliyun.com/debian/ bullseye-updates main contrib non-free" \
-        "deb https://mirrors.aliyun.com/debian-security/ bullseye-security main contrib non-free" \
-        > /etc/apt/sources.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        git \
-        python-is-python3 \
-        libnss3 \
-        libnspr4 \
-        libdbus-1-3 \
-        libatk1.0-0 \
-        libatk-bridge2.0-0 \
-        libcups2 \
-        libdrm2 \
-        libatspi2.0-0 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxfixes3 \
-        libxrandr2 \
-        libgbm1 \
-        libxkbcommon0 \
-        libasound2 \
-        libpango-1.0-0 \
-        libcairo2 \
-    && rm -rf /var/lib/apt/lists/*
-
+# Install Python dependencies first for better layer caching.
 COPY requirements_docker.txt /Bangumi_Auto_Rename/
 
 RUN pip install --upgrade pip \

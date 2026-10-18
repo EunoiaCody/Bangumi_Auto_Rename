@@ -11,9 +11,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /Bangumi_Auto_Rename
 
-# Use the base image's multi-arch Debian sources (main + updates + security).
-# Overriding them with a single mirror can pin mismatched package versions.
-RUN apt-get update \
+# Use a multi-arch Debian mirror with main + updates + security. Keeping all
+# three components avoids perl/perl-base version mismatches.
+RUN printf '%s\n' \
+        "deb https://mirrors.aliyun.com/debian/ bullseye main contrib non-free" \
+        "deb https://mirrors.aliyun.com/debian/ bullseye-updates main contrib non-free" \
+        "deb https://mirrors.aliyun.com/debian-security/ bullseye-security main contrib non-free" \
+        > /etc/apt/sources.list \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         python-is-python3 \

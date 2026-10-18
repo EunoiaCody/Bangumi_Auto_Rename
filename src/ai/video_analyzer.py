@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -43,7 +46,9 @@ class VideoAnalyzer:
                 return None
 
         except Exception as e:
-            logger.warning(f"[视频分析] 无法获取 {file_path.name} 的时长: {str(e)}")
+            logger.warning(
+                f"[视频分析] 无法获取 {file_path.name} 的时长: {str(e)}"
+            )
             return None
         finally:
             # 确保解析器被正确关闭
@@ -51,7 +56,9 @@ class VideoAnalyzer:
                 parser.close()
 
     @staticmethod
-    def analyze_video_files(base_path: Path, file_paths: List[Path]) -> List[Dict]:
+    def analyze_video_files(
+        base_path: Path, file_paths: List[Path]
+    ) -> List[Dict]:
         """
         分析多个视频文件
 
@@ -112,7 +119,9 @@ class VideoAnalyzer:
             # 获取时长
             duration = metadata.get("duration")
             if duration:
-                info["duration"] = duration.total_seconds() / 60.0  # 转换为分钟
+                info["duration"] = (
+                    duration.total_seconds() / 60.0
+                )  # 转换为分钟
 
             # 获取比特率
             bit_rate = metadata.get("bit_rate")
@@ -152,7 +161,9 @@ class VideoAnalyzer:
             return info
 
         except Exception as e:
-            logger.error(f"[视频分析] 获取 {file_path.name} 信息失败: {str(e)}")
+            logger.error(
+                f"[视频分析] 获取 {file_path.name} 信息失败: {str(e)}"
+            )
             return None
         finally:
             # 确保解析器被正确关闭

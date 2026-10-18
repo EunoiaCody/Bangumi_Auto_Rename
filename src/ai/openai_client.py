@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 import re
 import json
 from typing import Dict, List, Optional
@@ -6,8 +9,8 @@ from openai import OpenAI
 from pydantic import ValidationError
 
 from ..logger import logger
-from .base_client import BaseAIClient
 from .models import AIAnalysisResult
+from .base_client import BaseAIClient
 from ..config.config_manager import cm
 
 
@@ -39,10 +42,10 @@ class OpenAIClient(BaseAIClient):
         local_files: List[Dict],
     ) -> Optional[AIAnalysisResult]:
         """
-        使用OpenAI API分析本地文件与TMDB剧集的映射关系
+        使用OpenAI API分析本地文件与元数据剧集的映射关系
 
         Args:
-            anime_info: TMDB动漫信息
+            anime_info: 统一元数据（Bangumi/TMDB）
             local_files: 本地文件信息列表，包含文件名、路径、时长等
 
         Returns:
@@ -67,7 +70,10 @@ class OpenAIClient(BaseAIClient):
             system_prompt = AIClient.get_system_prompt()
 
             # 对于需要手动指定JSON格式的模式，将格式说明添加到system prompt
-            if self.output_format not in ["function_calling", "structured_output"]:
+            if self.output_format not in [
+                "function_calling",
+                "structured_output",
+            ]:
                 system_prompt += self._get_json_instructions()
 
             messages = [
@@ -90,7 +96,9 @@ class OpenAIClient(BaseAIClient):
             response = self.client.chat.completions.create(**request_params)
 
             response_message = response.choices[0].message
-            logger.debug(f"[OpenAI识别] Response content: {response_message.content}")
+            logger.debug(
+                f"[OpenAI识别] Response content: {response_message.content}"
+            )
             if not response_message:
                 logger.error("[OpenAI识别] OpenAI 响应内容为空")
                 return None
@@ -131,11 +139,15 @@ class OpenAIClient(BaseAIClient):
         if response_message.tool_calls:
             tool_call = response_message.tool_calls[0]
             if tool_call.function.name == "analyze_file_structure":
-                logger.debug(f"[OpenAI识别] 识别到Tool-calling: {tool_call.function.name}")
+                logger.debug(
+                    f"[OpenAI识别] 识别到Tool-calling: {tool_call.function.name}"
+                )
                 try:
                     json_data = json.loads(tool_call.function.arguments)
                 except json.JSONDecodeError as e:
-                    logger.error(f"[OpenAI识别] 解析Tool-calling JSON失败: {e}")
+                    logger.error(
+                        f"[OpenAI识别] 解析Tool-calling JSON失败: {e}"
+                    )
                     logger.error(
                         f"[OpenAI识别] 原始数据: {tool_call.function.arguments}"
                     )
@@ -154,7 +166,9 @@ class OpenAIClient(BaseAIClient):
         try:
             # 使用Pydantic验证和解析
             result = AIAnalysisResult(**json_data)
-            logger.info(f"[OpenAI识别] JSON结构验证成功，置信度: {result.confidence}")
+            logger.info(
+                f"[OpenAI识别] JSON结构验证成功，置信度: {result.confidence}"
+            )
             return result
         except ValidationError as e:
             logger.error(f"[OpenAI识别] JSON结构验证失败: {e}")
@@ -201,7 +215,9 @@ class OpenAIClient(BaseAIClient):
                     continue
 
         # 如果所有方法都失败，记录错误并返回None
-        logger.error(f"[OpenAI识别] 无法从响应中提取有效JSON: {content[:200]}...")
+        logger.error(
+            f"[OpenAI识别] 无法从响应中提取有效JSON: {content[:200]}..."
+        )
         return None
 
     def _clean_json_content(self, json_str: str) -> str:
@@ -235,7 +251,7 @@ class OpenAIClient(BaseAIClient):
             "type": "function",
             "function": {
                 "name": "analyze_file_structure",
-                "description": "分析本地文件结构并返回与TMDB的映射关系",
+                "description": "分析本地文件结构并返回与元数据的映射关系",
                 "parameters": schema,
             },
         }

@@ -2,45 +2,45 @@
     "file_mapping": [
         {
             "file_path": "Season 1/Jujutsu Kaisen S01E01.mkv",
-            "tmdb_season": 1,
-            "tmdb_episode": 1,
             "episode_type": "regular",
-            "confidence": "High"
+            "confidence": "High",
+            "season": 1,
+            "episode": 1
         },
         {
             "file_path": "Season 1/Jujutsu Kaisen S01E02.mkv",
-            "tmdb_season": 1,
-            "tmdb_episode": 2,
             "episode_type": "regular",
-            "confidence": "High"
+            "confidence": "High",
+            "season": 1,
+            "episode": 2
         },
         {
             "file_path": "Season 2/Jujutsu Kaisen S02E01.mkv",
-            "tmdb_season": 2,
-            "tmdb_episode": 1,
             "episode_type": "regular",
-            "confidence": "High"
+            "confidence": "High",
+            "season": 2,
+            "episode": 1
         },
         {
             "file_path": "Season 2/Jujutsu Kaisen S02E02.mkv",
-            "tmdb_season": 2,
-            "tmdb_episode": 2,
             "episode_type": "regular",
-            "confidence": "High"
+            "confidence": "High",
+            "season": 2,
+            "episode": 2
         },
         {
             "file_path": "Specials/Jujutsu Kaisen OVA01.mkv",
-            "tmdb_season": 0,
-            "tmdb_episode": 1,
             "episode_type": "special",
-            "confidence": "High"
+            "confidence": "High",
+            "season": 0,
+            "episode": 1
         },
         {
             "file_path": "Specials/Jujutsu Kaisen OVA02.mkv",
-            "tmdb_season": 0,
-            "tmdb_episode": 2,
             "episode_type": "special",
-            "confidence": "High"
+            "confidence": "High",
+            "season": 0,
+            "episode": 2
         }
     ]
 }

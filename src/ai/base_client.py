@@ -1,13 +1,16 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 import json
-from abc import ABC, abstractmethod
-from datetime import datetime
 from pathlib import Path
+from datetime import datetime
+from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
-from ..config.config_manager import cm
 from ..logger import logger
-from ..utils.path import AI_ANALYSIS_PATH
 from .models import AIAnalysisResult
+from ..config.config_manager import cm
+from ..utils.path import AI_ANALYSIS_PATH
 
 
 class BaseAIClient(ABC):
@@ -29,10 +32,10 @@ class BaseAIClient(ABC):
         local_files: List[Dict],
     ) -> Optional[AIAnalysisResult]:
         """
-        分析本地文件与TMDB剧集的映射关系
+        分析本地文件与元数据剧集的映射关系
 
         Args:
-            anime_info: TMDB动漫信息
+            anime_info: 统一元数据（Bangumi/TMDB）
             local_files: 本地文件信息列表，包含文件名、路径、时长等
 
         Returns:
@@ -55,7 +58,7 @@ class BaseAIClient(ABC):
         保存分析数据和结果到文件
 
         Args:
-            anime_info (Dict): TMDB动漫信息
+            anime_info (Dict): 统一元数据（Bangumi/TMDB）
             local_files (List[Dict]): 本地文件信息
             result (Optional[AIAnalysisResult], optional): AI分析结果. Defaults to None.
         """
@@ -64,7 +67,9 @@ class BaseAIClient(ABC):
 
         try:
             anime_name = (
-                anime_info.get("name", "unknown").replace("/", "_").replace("\\", "_")
+                anime_info.get("name", "unknown")
+                .replace("/", "_")
+                .replace("\\", "_")
             )
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{anime_name}_{self.provider_name}_{timestamp}.json"
@@ -93,4 +98,6 @@ class BaseAIClient(ABC):
                 f"[{self.provider_name.upper()}] 分析数据已保存到: {output_path}"
             )
         except Exception as e:
-            logger.error(f"[{self.provider_name.upper()}] 保存分析数据失败: {e}")
+            logger.error(
+                f"[{self.provider_name.upper()}] 保存分析数据失败: {e}"
+            )

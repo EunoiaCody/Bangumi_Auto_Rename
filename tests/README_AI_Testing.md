@@ -38,7 +38,7 @@
 
 请先在web ui中或json配置文件中完成以下配置：
 
-1. 配置TMDB API密钥
+1. 配置 Bangumi（可选令牌）或 TMDB API 密钥
 2. 配置AI提供商API密钥（OpenAI或Gemini）
 3. 确保AI功能已启用
 
@@ -55,6 +55,8 @@ python tests/test_ai_recognition.py [选项]
   --input INPUT                   测试用例JSON文件路径
 
 可选参数:
+  --metadata-source {bangumi,tmdb}
+                                  动漫元数据源（默认 bangumi）
   --provider {openai,gemini}      AI提供商选择
   --openai_output_format {function_calling,json_object,structured_output,text}
                                   OpenAI输出格式选择
@@ -165,7 +167,7 @@ python tests/test_ai_recognition.py --mode auto --input test_case.json --provide
     "total_size_mb": "总大小(MB)"
   },
   "anime_info": {
-    "TMDB动漫信息": "包含季度、剧集等详细信息"
+    "元数据": "Bangumi/TMDB 的季度、剧集等详细信息"
   },
   "local_files": [
     {
@@ -218,7 +220,7 @@ python tests/test_ai_recognition.py --mode auto --input test_case.json --provide
 
 AI分析结果文件包含：
 - **测试元数据**：模式、提供商、时间戳、路径名称等
-- **动漫信息和本地文件信息**：TMDB数据和文件列表
+- **动漫信息和本地文件信息**：Bangumi/TMDB 元数据和文件列表
 - **AI分析结果**：季度映射、文件映射、置信度等
 - **文件映射分析报告**：
   - `original_file_count`: 原始文件总数
@@ -244,7 +246,7 @@ python tests/test_ai_recognition.py --mode auto --input auto_MyAnime_gemini_2025
 - 使用save模式收集各种类型的动漫测试用例
 - 包含不同的文件结构和命名规则
 - 覆盖多季度、OVA、特典等复杂情况
-- 本地分季规则与TMDB不符的情况
+- 本地分季规则与元数据不符的情况
 
 ### 2. 不同AI模型对比
 
@@ -273,7 +275,8 @@ python tests/test_ai_recognition.py --mode auto --input auto_MyAnime_gemini_2025
 
 ### 分析功能
 
-脚本会自动分析AI识别结果的准确性，提供详细的映射分析报告：
+脚本会自动分析AI识别结果的准确性，提供详细的映射分析报告（字段已统一为
+`season` / `episode`，旧版 `tmdb_season` / `tmdb_episode` 结果仍可读取）：
 
 #### 📊 统计信息
 - **原始文件总数**：输入的视频文件数量

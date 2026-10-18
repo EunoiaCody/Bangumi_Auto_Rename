@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "id": 100,
+      "name": "Test Anime",
+      "name_cn": "测试动画",
+      "date": "2020-04-01",
+      "platform": "TV",
+      "eps": 12,
+      "type": 2,
+      "nsfw": false,
+      "rating": {
+        "score": 8.0
+      }
+    },
+    {
+      "id": 200,
+      "name": "Test Anime 2nd Season",
+      "name_cn": "测试动画 第二季",
+      "date": "2022-04-01",
+      "platform": "TV",
+      "eps": 12,
+      "type": 2,
+      "nsfw": false,
+      "rating": {
+        "score": 8.2
+      }
+    },
+    {
+      "id": 300,
+      "name": "Test Anime Movie",
+      "name_cn": "测试动画 剧场版",
+      "date": "2023-06-01",
+      "platform": "剧场版",
+      "eps": 1,
+      "type": 2,
+      "nsfw": false,
+      "rating": {
+        "score": 8.5
+      }
+    }
+  ],
+  "total": 3
+}

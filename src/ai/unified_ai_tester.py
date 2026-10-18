@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 #!/usr/bin/env python3
 """
 统一AI测试器 - 使用当前界面配置进行测试
@@ -35,10 +38,14 @@ class UnifiedAITester:
         self.current_config = current_config
         self.original_config = {}
         self.test_case_path = (
-            Path(__file__).parent.parent.parent / "tests" / "example_test_case.json"
+            Path(__file__).parent.parent.parent
+            / "tests"
+            / "example_test_case.json"
         )
         self.expected_path = (
-            Path(__file__).parent.parent.parent / "tests" / "example_expected.json"
+            Path(__file__).parent.parent.parent
+            / "tests"
+            / "example_expected.json"
         )
 
     def _apply_current_config(self):
@@ -48,7 +55,7 @@ class UnifiedAITester:
             self.original_config[key] = cm.get_config(key)
             cm.set_config(key, value)
             if "api_key" in key:
-                value = len(str(value)) * '*'
+                value = len(str(value)) * "*"
             logger.debug(f"[AI识别测试] 设置配置 {key}: {value}")
         if not cm.get_config("ai_enabled"):
             cm.set_config("ai_enabled", True)
@@ -60,7 +67,7 @@ class UnifiedAITester:
         for key, value in self.original_config.items():
             cm.set_config(key, value)
             if "api_key" in key:
-                value = len(str(value)) * '*'
+                value = len(str(value)) * "*"
             logger.debug(f"[AI识别测试] 恢复配置 {key}: {value}")
         self.original_config.clear()
 
@@ -68,10 +75,12 @@ class UnifiedAITester:
         """加载测试用例"""
         try:
             if not self.test_case_path.exists():
-                logger.error(f"[AI识别测试] 测试用例文件不存在: {self.test_case_path}")
+                logger.error(
+                    f"[AI识别测试] 测试用例文件不存在: {self.test_case_path}"
+                )
                 return None
 
-            with open(self.test_case_path, 'r', encoding='utf-8') as f:
+            with open(self.test_case_path, "r", encoding="utf-8") as f:
                 test_case = json.load(f)
                 logger.info(
                     f"[AI识别测试] 成功加载测试用例: {test_case.get('metadata', {}).get('path_name', 'Unknown')}"
@@ -85,10 +94,12 @@ class UnifiedAITester:
         """加载期望结果"""
         try:
             if not self.expected_path.exists():
-                logger.warning(f"[AI识别测试] 期望结果文件不存在: {self.expected_path}")
+                logger.warning(
+                    f"[AI识别测试] 期望结果文件不存在: {self.expected_path}"
+                )
                 return None
 
-            with open(self.expected_path, 'r', encoding='utf-8') as f:
+            with open(self.expected_path, "r", encoding="utf-8") as f:
                 expected = json.load(f)
                 logger.info("[AI识别测试] 成功加载期望结果")
                 return expected
@@ -108,7 +119,9 @@ class UnifiedAITester:
         }
 
         if not ai_result:
-            validation_result["validation_details"]["error"] = "AI分析失败，返回None"
+            validation_result["validation_details"][
+                "error"
+            ] = "AI分析失败，返回None"
             return validation_result
 
         # 基本验证
@@ -117,15 +130,17 @@ class UnifiedAITester:
 
         # 如果有期望结果，进行详细验证
         if expected and "file_mapping" in expected:
-            expected_mapping_list = expected["file_mapping"]  # 这是一个字典列表
+            expected_mapping_list = expected[
+                "file_mapping"
+            ]  # 这是一个字典列表
 
             # 将期望结果转换为字典，key为file_path
             expected_mapping = {}
             for item in expected_mapping_list:
                 file_path = item["file_path"]
                 expected_mapping[file_path] = {
-                    "tmdb_season": item["tmdb_season"],
-                    "tmdb_episode": item["tmdb_episode"],
+                    "season": item["season"],
+                    "episode": item["episode"],
                     "episode_type": item.get("episode_type", "regular"),
                     "confidence": item.get("confidence", "Medium"),
                 }
@@ -135,8 +150,8 @@ class UnifiedAITester:
             for item in ai_result.file_mapping:
                 file_path = item.file_path
                 actual_mapping[file_path] = {
-                    "tmdb_season": item.tmdb_season,
-                    "tmdb_episode": item.tmdb_episode,
+                    "season": item.season,
+                    "episode": item.episode,
                     "episode_type": item.episode_type,
                     "confidence": item.confidence,
                 }
@@ -153,9 +168,10 @@ class UnifiedAITester:
                     actual_info = actual_mapping[file_path]
                     # 检查关键字段是否匹配（不包括confidence）
                     if (
-                        actual_info["tmdb_season"] == expected_info["tmdb_season"]
-                        and actual_info["tmdb_episode"] == expected_info["tmdb_episode"]
-                        and actual_info["episode_type"] == expected_info["episode_type"]
+                        actual_info["season"] == expected_info["season"]
+                        and actual_info["episode"] == expected_info["episode"]
+                        and actual_info["episode_type"]
+                        == expected_info["episode_type"]
                     ):
                         matched_count += 1
                         matched_files.append(file_path)
@@ -171,7 +187,9 @@ class UnifiedAITester:
                 "expected_count": total_expected,
                 "actual_count": len(actual_mapping),
                 "matched_count": matched_count,
-                "accuracy": matched_count / total_expected if total_expected > 0 else 0,
+                "accuracy": (
+                    matched_count / total_expected if total_expected > 0 else 0
+                ),
                 "matched_files": matched_files,
                 "missing_files": missing_files,
                 "extra_files": extra_files,
@@ -204,11 +222,15 @@ class UnifiedAITester:
             # 创建AI客户端
             ai_client = AIClient()
             if not ai_client.is_available():
-                result["error"] = f"AI客户端不可用 - 提供商: {ai_client.provider}"
+                result["error"] = (
+                    f"AI客户端不可用 - 提供商: {ai_client.provider}"
+                )
                 return result
 
             # 执行AI分析
-            logger.info(f"[AI识别测试] 开始AI分析 - 提供商: {ai_client.provider}")
+            logger.info(
+                f"[AI识别测试] 开始AI分析 - 提供商: {ai_client.provider}"
+            )
             ai_result = ai_client.analyze_episode_mapping(
                 test_case["anime_info"], test_case["local_files"]
             )
@@ -270,7 +292,11 @@ class UnifiedAITester:
         logger.info("[AI识别测试] 开始OpenAI API多格式测试")
 
         # 要测试的输出格式
-        formats_to_test = ["structured_output", "json_object", "function_calling"]
+        formats_to_test = [
+            "structured_output",
+            "json_object",
+            "function_calling",
+        ]
         format_results = []
         successful_formats = []
 
@@ -303,9 +329,15 @@ class UnifiedAITester:
         )
         return overall_result
 
-    def _get_recommended_format(self, format_results: List[Dict[str, Any]]) -> str:
+    def _get_recommended_format(
+        self, format_results: List[Dict[str, Any]]
+    ) -> str:
         """根据测试结果推荐最佳格式"""
-        priority_order = ["structured_output", "json_object", "function_calling"]
+        priority_order = [
+            "structured_output",
+            "json_object",
+            "function_calling",
+        ]
 
         # 当前使用简单测试用例，不允许出错，只要有错误就标记为失败
         perfect_formats = []  # 完全正确的格式
@@ -340,7 +372,9 @@ class UnifiedAITester:
         if perfect_formats:
             for preferred_format in priority_order:
                 if preferred_format in perfect_formats:
-                    logger.info(f"[AI识别测试] 推荐格式: {preferred_format} (完全正确)")
+                    logger.info(
+                        f"[AI识别测试] 推荐格式: {preferred_format} (完全正确)"
+                    )
                     return preferred_format
             # 如果优先级列表中没有，选择第一个完全正确的
             best_format = perfect_formats[0]

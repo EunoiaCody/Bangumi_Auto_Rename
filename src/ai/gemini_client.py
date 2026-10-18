@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 import json
 from typing import Dict, List, Optional
 
@@ -6,8 +9,8 @@ from pydantic import ValidationError
 from google.genai.types import HttpOptions, GenerateContentConfig
 
 from ..logger import logger
-from .base_client import BaseAIClient
 from .models import AIAnalysisResult
+from .base_client import BaseAIClient
 from ..config.config_manager import cm
 
 
@@ -23,14 +26,15 @@ class GeminiClient(BaseAIClient):
         )
         self.model = cm.get_config("gemini_model") or "gemini-2.5-flash"
         self.temperature = float(cm.get_config("gemini_temperature") or 0.5)
- 
+
         if self.enabled and self.api_key:
             try:
                 # 构建http_options以支持自定义base_url
                 http_options = HttpOptions()
                 if (
                     self.base_url
-                    and self.base_url != "https://generativelanguage.googleapis.com"
+                    and self.base_url
+                    != "https://generativelanguage.googleapis.com"
                 ):
                     http_options.base_url = self.base_url
 
@@ -41,7 +45,9 @@ class GeminiClient(BaseAIClient):
                 else:
                     self.client = genai.Client(api_key=self.api_key)
 
-                logger.info(f"[Gemini客户端] 初始化成功，使用API地址: {self.base_url}")
+                logger.info(
+                    f"[Gemini客户端] 初始化成功，使用API地址: {self.base_url}"
+                )
             except Exception as e:
                 logger.error(f"[Gemini客户端] 初始化失败: {e}")
                 self.client = None
@@ -58,10 +64,10 @@ class GeminiClient(BaseAIClient):
         local_files: List[Dict],
     ) -> Optional[AIAnalysisResult]:
         """
-        使用Gemini API分析本地文件与TMDB剧集的映射关系
+        使用Gemini API分析本地文件与元数据剧集的映射关系
 
         Args:
-            anime_info: TMDB动漫信息
+            anime_info: 统一元数据（Bangumi/TMDB）
             local_files: 本地文件信息列表，包含文件名、路径、时长等
 
         Returns:
@@ -103,9 +109,9 @@ class GeminiClient(BaseAIClient):
                     temperature=self.temperature,
                 )
                 request = {
-                    'model': self.model,
-                    'config': request_config,
-                    'contents': request_contents
+                    "model": self.model,
+                    "config": request_config,
+                    "contents": request_contents,
                 }
                 logger.debug(f"[Gemini识别] Request: {request}")
                 response = self.client.models.generate_content(
@@ -123,7 +129,7 @@ class GeminiClient(BaseAIClient):
                 return None
 
             # 直接使用Gemini的解析结果
-            if hasattr(response, 'parsed') and response.parsed:
+            if hasattr(response, "parsed") and response.parsed:
                 logger.debug(f"[Gemini识别] 解析后的JSON: {response.parsed}")
                 result = AIAnalysisResult.model_validate(response.parsed)
                 logger.info(
@@ -136,11 +142,15 @@ class GeminiClient(BaseAIClient):
                 json_data = json.loads(response.text)
                 logger.debug("[Gemini识别] 手动解析的JSON成功!")
                 result = AIAnalysisResult(**json_data)
-                logger.info(f"[Gemini识别] 手动解析成功，置信度: {result.confidence}")
+                logger.info(
+                    f"[Gemini识别] 手动解析成功，置信度: {result.confidence}"
+                )
                 return result
             except (json.JSONDecodeError, ValidationError) as e:
                 logger.error(f"[Gemini识别] JSON解析失败: {e}")
-                logger.error(f"[Gemini识别] 原始响应: {response.text[:200]}...")
+                logger.error(
+                    f"[Gemini识别] 原始响应: {response.text[:200]}..."
+                )
                 return None
 
         except Exception as e:

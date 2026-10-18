@@ -1,0 +1,287 @@
+{
+  "100": {
+    "data": [
+      {
+        "id": 10001,
+        "type": 0,
+        "ep": 1,
+        "sort": 1,
+        "name": "S1 Episode 1",
+        "name_cn": "S1 第1话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10002,
+        "type": 0,
+        "ep": 2,
+        "sort": 2,
+        "name": "S1 Episode 2",
+        "name_cn": "S1 第2话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10003,
+        "type": 0,
+        "ep": 3,
+        "sort": 3,
+        "name": "S1 Episode 3",
+        "name_cn": "S1 第3话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10004,
+        "type": 0,
+        "ep": 4,
+        "sort": 4,
+        "name": "S1 Episode 4",
+        "name_cn": "S1 第4话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10005,
+        "type": 0,
+        "ep": 5,
+        "sort": 5,
+        "name": "S1 Episode 5",
+        "name_cn": "S1 第5话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10006,
+        "type": 0,
+        "ep": 6,
+        "sort": 6,
+        "name": "S1 Episode 6",
+        "name_cn": "S1 第6话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10007,
+        "type": 0,
+        "ep": 7,
+        "sort": 7,
+        "name": "S1 Episode 7",
+        "name_cn": "S1 第7话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10008,
+        "type": 0,
+        "ep": 8,
+        "sort": 8,
+        "name": "S1 Episode 8",
+        "name_cn": "S1 第8话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10009,
+        "type": 0,
+        "ep": 9,
+        "sort": 9,
+        "name": "S1 Episode 9",
+        "name_cn": "S1 第9话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10010,
+        "type": 0,
+        "ep": 10,
+        "sort": 10,
+        "name": "S1 Episode 10",
+        "name_cn": "S1 第10话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10011,
+        "type": 0,
+        "ep": 11,
+        "sort": 11,
+        "name": "S1 Episode 11",
+        "name_cn": "S1 第11话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 10012,
+        "type": 0,
+        "ep": 12,
+        "sort": 12,
+        "name": "S1 Episode 12",
+        "name_cn": "S1 第12话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 999001,
+        "type": 1,
+        "ep": null,
+        "sort": 1,
+        "name": "Special",
+        "name_cn": "特典",
+        "airdate": "2020-01-01",
+        "duration_seconds": 600
+      },
+      {
+        "id": 999002,
+        "type": 2,
+        "ep": null,
+        "sort": 1,
+        "name": "OP",
+        "name_cn": "OP",
+        "airdate": "2020-01-01",
+        "duration_seconds": 90
+      }
+    ],
+    "total": 12
+  },
+  "200": {
+    "data": [
+      {
+        "id": 20001,
+        "type": 0,
+        "ep": 1,
+        "sort": 1,
+        "name": "S2 Episode 1",
+        "name_cn": "S2 第1话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20002,
+        "type": 0,
+        "ep": 2,
+        "sort": 2,
+        "name": "S2 Episode 2",
+        "name_cn": "S2 第2话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20003,
+        "type": 0,
+        "ep": 3,
+        "sort": 3,
+        "name": "S2 Episode 3",
+        "name_cn": "S2 第3话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20004,
+        "type": 0,
+        "ep": 4,
+        "sort": 4,
+        "name": "S2 Episode 4",
+        "name_cn": "S2 第4话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20005,
+        "type": 0,
+        "ep": 5,
+        "sort": 5,
+        "name": "S2 Episode 5",
+        "name_cn": "S2 第5话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20006,
+        "type": 0,
+        "ep": 6,
+        "sort": 6,
+        "name": "S2 Episode 6",
+        "name_cn": "S2 第6话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20007,
+        "type": 0,
+        "ep": 7,
+        "sort": 7,
+        "name": "S2 Episode 7",
+        "name_cn": "S2 第7话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20008,
+        "type": 0,
+        "ep": 8,
+        "sort": 8,
+        "name": "S2 Episode 8",
+        "name_cn": "S2 第8话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20009,
+        "type": 0,
+        "ep": 9,
+        "sort": 9,
+        "name": "S2 Episode 9",
+        "name_cn": "S2 第9话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20010,
+        "type": 0,
+        "ep": 10,
+        "sort": 10,
+        "name": "S2 Episode 10",
+        "name_cn": "S2 第10话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20011,
+        "type": 0,
+        "ep": 11,
+        "sort": 11,
+        "name": "S2 Episode 11",
+        "name_cn": "S2 第11话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      },
+      {
+        "id": 20012,
+        "type": 0,
+        "ep": 12,
+        "sort": 12,
+        "name": "S2 Episode 12",
+        "name_cn": "S2 第12话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      }
+    ],
+    "total": 12
+  },
+  "300": {
+    "data": [
+      {
+        "id": 30001,
+        "type": 0,
+        "ep": 1,
+        "sort": 1,
+        "name": "Movie Episode 1",
+        "name_cn": "Movie 第1话",
+        "airdate": "2020-04-01",
+        "duration_seconds": 1440
+      }
+    ],
+    "total": 1
+  }
+}

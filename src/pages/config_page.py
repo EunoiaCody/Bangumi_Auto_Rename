@@ -1,11 +1,14 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 from typing import Sequence
 from types import SimpleNamespace
 
 from nicegui import ui
 
-from ..logger import logger, update_log_level_from_config
 from ..config.config_manager import CN_MAP, cm
 from ..element.red import RedButton, RedToogle
+from ..logger import logger, update_log_level_from_config
 from ..component.local_file_picker import local_file_picker
 
 
@@ -32,9 +35,43 @@ class ConfigPage(ui.dialog):
                 "anime_movie_path",
                 "mode",
                 "docker_mnt",
+                "metadata_source",
+                "naming_title_source",
+                "rename_style",
+                "filename_title_language",
                 "log_level",
             ]
             for cn in basic_configs:
+                self._create_config_row(cn)
+
+            ui.separator().style("margin: 20px 0;")
+
+            # Bangumi 配置
+            ui.label("Bangumi 元数据配置").style(
+                "font-size: 16px; font-weight: bold; margin-top: 10px;"
+            )
+            bangumi_configs = [
+                "bangumi_access_token",
+                "bangumi_base_url",
+                "bangumi_user_agent",
+            ]
+            for cn in bangumi_configs:
+                self._create_config_row(cn)
+
+            ui.separator().style("margin: 20px 0;")
+
+            # qBittorrent 配置
+            ui.label("qBittorrent 配置").style(
+                "font-size: 16px; font-weight: bold; margin-top: 10px;"
+            )
+            qb_configs = [
+                "qb_safe_mode",
+                "qb_link_fallback",
+                "qb_category_anime",
+                "qb_category_movie",
+                "qb_category_ignore",
+            ]
+            for cn in qb_configs:
                 self._create_config_row(cn)
 
             ui.separator().style("margin: 20px 0;")
@@ -62,13 +99,15 @@ class ConfigPage(ui.dialog):
                 self._create_config_row(cn)
 
             # AI功能测试按钮
-            with ui.row(wrap=False).classes("w-full justify-center mt-4 gap-2"):
+            with ui.row(wrap=False).classes(
+                "w-full justify-center mt-4 gap-2"
+            ):
                 RedButton(
                     "🧪 测试AI识别功能", on_click=self._test_ai_recognition
                 ).props("outline")
-                RedButton("⚙️ 测试OpenAI API功能", on_click=self._test_openai_api).props(
-                    "outline"
-                )
+                RedButton(
+                    "⚙️ 测试OpenAI API功能", on_click=self._test_openai_api
+                ).props("outline")
 
             ui.separator()
 
@@ -78,7 +117,9 @@ class ConfigPage(ui.dialog):
 
     def _create_config_row(self, cn: str):
         with ui.column(wrap=False).classes("flex no-wrap w-full"):
-            with ui.row(wrap=False).classes("flex justify-space-between w-full"):
+            with ui.row(wrap=False).classes(
+                "flex justify-space-between w-full"
+            ):
                 with ui.row(wrap=False, align_items="baseline") as row:
                     row.classes("flex w-full")
                     # 配置标签
@@ -89,6 +130,56 @@ class ConfigPage(ui.dialog):
                         tg = RedToogle(
                             ["链接", "复制", "剪切"],
                             value=cm.get_config(cn),
+                            on_change=lambda e, c=cn: self._change(c, e.value),
+                        )
+                        tg.style("font-size: 10px")
+                        tg.classes("flex no-wrap w-full")
+                    elif cn == "metadata_source":
+                        tg = RedToogle(
+                            ["bangumi", "tmdb"],
+                            value=cm.get_config(cn) or "bangumi",
+                            on_change=lambda e, c=cn: self._change(c, e.value),
+                        )
+                        tg.style("font-size: 10px")
+                        tg.classes("flex no-wrap w-full")
+                    elif cn == "naming_title_source":
+                        tg = RedToogle(
+                            ["auto", "bangumi", "tmdb"],
+                            value=cm.get_config(cn) or "auto",
+                            on_change=lambda e, c=cn: self._change(c, e.value),
+                        )
+                        tg.style("font-size: 10px")
+                        tg.classes("flex no-wrap w-full")
+                    elif cn == "rename_style":
+                        tg = RedToogle(
+                            ["jellyfin", "legacy"],
+                            value=cm.get_config(cn) or "jellyfin",
+                            on_change=lambda e, c=cn: self._change(c, e.value),
+                        )
+                        tg.style("font-size: 10px")
+                        tg.classes("flex no-wrap w-full")
+                    elif cn == "filename_title_language":
+                        tg = RedToogle(
+                            ["zh", "ja", "none"],
+                            value=cm.get_config(cn) or "zh",
+                            on_change=lambda e, c=cn: self._change(c, e.value),
+                        )
+                        tg.style("font-size: 10px")
+                        tg.classes("flex no-wrap w-full")
+                    elif cn == "qb_safe_mode":
+                        tg = RedToogle(
+                            ["启用", "禁用"],
+                            value="启用" if cm.get_config(cn) else "禁用",
+                            on_change=lambda e, c=cn: self._change(
+                                c, e.value == "启用"
+                            ),
+                        )
+                        tg.style("font-size: 10px")
+                        tg.classes("flex no-wrap w-full")
+                    elif cn == "qb_link_fallback":
+                        tg = RedToogle(
+                            ["copy", "symlink", "skip"],
+                            value=cm.get_config(cn) or "copy",
                             on_change=lambda e, c=cn: self._change(c, e.value),
                         )
                         tg.style("font-size: 10px")
@@ -169,10 +260,10 @@ class ConfigPage(ui.dialog):
                         ui.label("").style("min-width: 60px")
 
     async def pick(self, *, key: str) -> None:
-        result = await local_file_picker('~', multiple=True)
+        result = await local_file_picker("~", multiple=True)
         if isinstance(result, Sequence):
             result = result[0]
-        logger.info(f'[配置] {key} 选择了 {result}')
+        logger.info(f"[配置] {key} 选择了 {result}")
         self._change(key, result)
 
     def _change(self, key: str, value: str) -> None:
@@ -180,7 +271,7 @@ class ConfigPage(ui.dialog):
 
     def _handle_ok(self):
         # 验证URL配置项
-        url_configs = ["ai_base_url", "gemini_base_url"]
+        url_configs = ["ai_base_url", "gemini_base_url", "bangumi_base_url"]
         for url_config in url_configs:
             if hasattr(self.config, url_config):
                 url_value = getattr(self.config, url_config)
@@ -199,15 +290,17 @@ class ConfigPage(ui.dialog):
             )
         config_show = cm.config.copy()
         for key in config_show.keys():
-            if "api_key" in key:
+            if "api_key" in key or "token" in key:
                 config_show[key] = len(str(config_show[key])) * "*"
 
-        logger.info('[配置] 配置已修改为： {}'.format(config_show))
+        logger.info("[配置] 配置已修改为： {}".format(config_show))
         ui.notify("✅ 配置保存成功", type="positive")
         # 更新运行时日志级别
         try:
             update_log_level_from_config()
-            logger.info(f"[配置] 运行时日志级别已更新为 {cm.get_config('log_level')}")
+            logger.info(
+                f"[配置] 运行时日志级别已更新为 {cm.get_config('log_level')}"
+            )
         except Exception as e:
             logger.error(f"[配置] 更新运行时日志级别失败: {e}")
         self.close()
@@ -331,7 +424,9 @@ class ConfigPage(ui.dialog):
                 ui.label(f"⏱️ 耗时: {result.get('duration', 0):.2f}秒")
 
                 if provider.lower() == "openai":
-                    output_format = config_used.get("openai_output_format", "unknown")
+                    output_format = config_used.get(
+                        "openai_output_format", "unknown"
+                    )
                     ui.label(f"📋 输出格式: {output_format}")
 
                 # AI失败情况：显示错误信息
@@ -339,16 +434,19 @@ class ConfigPage(ui.dialog):
                     ui.separator()
                     ui.label("❌ 错误详情").classes("font-bold text-red")
                     if result.get("error"):
-                        ui.label(f"错误信息: {result['error']}").classes("text-red")
-                    else:
-                        ui.label("AI分析返回None，可能是API调用失败或解析错误").classes(
+                        ui.label(f"错误信息: {result['error']}").classes(
                             "text-red"
                         )
+                    else:
+                        ui.label(
+                            "AI分析返回None，可能是API调用失败或解析错误"
+                        ).classes("text-red")
 
                 # 验证失败和完全正确情况：显示详细结果
-                elif result_status in ["validation_failed", "perfect"] and result.get(
-                    "validation"
-                ):
+                elif result_status in [
+                    "validation_failed",
+                    "perfect",
+                ] and result.get("validation"):
                     validation = result["validation"]
                     ui.separator()
                     ui.label("📊 分析结果").classes("font-bold")
@@ -365,7 +463,9 @@ class ConfigPage(ui.dialog):
                         if "accuracy" in details:
                             accuracy = details["accuracy"] * 100
                             accuracy_color = (
-                                "text-green" if accuracy == 100 else "text-orange"
+                                "text-green"
+                                if accuracy == 100
+                                else "text-orange"
                             )
                             ui.label(f"✅ 准确率: {accuracy:.1f}%").classes(
                                 accuracy_color
@@ -373,7 +473,9 @@ class ConfigPage(ui.dialog):
 
                             matched_count = details.get("matched_count", 0)
                             expected_count = details.get("expected_count", 0)
-                            ui.label(f"📈 匹配情况: {matched_count}/{expected_count}")
+                            ui.label(
+                                f"📈 匹配情况: {matched_count}/{expected_count}"
+                            )
 
                             # 显示详细的文件匹配情况
                             missing_files = details.get("missing_files", [])
@@ -399,9 +501,9 @@ class ConfigPage(ui.dialog):
                                     )
 
                             if extra_files:
-                                ui.label(f"⚠️ 多余文件 ({len(extra_files)}):").classes(
-                                    "text-orange font-bold"
-                                )
+                                ui.label(
+                                    f"⚠️ 多余文件 ({len(extra_files)}):"
+                                ).classes("text-orange font-bold")
                                 for file_path in extra_files:
                                     ui.label(f"  • {file_path}").classes(
                                         "text-sm text-orange"
@@ -432,7 +534,9 @@ class ConfigPage(ui.dialog):
                 ).classes("font-bold")
 
                 if results.get("error"):
-                    ui.label(f"❌ 错误信息: {results['error']}").classes("text-red")
+                    ui.label(f"❌ 错误信息: {results['error']}").classes(
+                        "text-red"
+                    )
 
                 # 推荐格式
                 if overall_success:
@@ -446,8 +550,12 @@ class ConfigPage(ui.dialog):
                 # 各格式详细结果
                 format_results = results.get("format_results", [])
                 for format_result in format_results:
-                    output_format = format_result.get("output_format", "unknown")
-                    result_status = format_result.get("result_status", "unknown")
+                    output_format = format_result.get(
+                        "output_format", "unknown"
+                    )
+                    result_status = format_result.get(
+                        "result_status", "unknown"
+                    )
 
                     # 根据结果状态确定图标和标题
                     if result_status == "perfect":
@@ -468,13 +576,16 @@ class ConfigPage(ui.dialog):
                         status_color = "text-gray"
 
                     with ui.expansion(
-                        f"{icon} {output_format} - {status_text}", icon="settings"
+                        f"{icon} {output_format} - {status_text}",
+                        icon="settings",
                     ).classes("w-full"):
                         with ui.column().classes("gap-2 p-2"):
                             ui.label(f"状态: {status_text}").classes(
                                 status_color + " font-bold"
                             )
-                            ui.label(f"耗时: {format_result.get('duration', 0):.2f}秒")
+                            ui.label(
+                                f"耗时: {format_result.get('duration', 0):.2f}秒"
+                            )
 
                             # AI失败情况：显示错误信息
                             if result_status == "ai_failed":
@@ -493,10 +604,14 @@ class ConfigPage(ui.dialog):
                                 "perfect",
                             ] and format_result.get("validation"):
                                 validation = format_result["validation"]
-                                confidence = validation.get("confidence", "None")
+                                confidence = validation.get(
+                                    "confidence", "None"
+                                )
                                 ui.label(f"置信度: {confidence}")
 
-                                file_count = validation.get("file_mapping_count", 0)
+                                file_count = validation.get(
+                                    "file_mapping_count", 0
+                                )
                                 ui.label(f"映射文件数: {file_count}")
 
                                 if "validation_details" in validation:
@@ -508,11 +623,13 @@ class ConfigPage(ui.dialog):
                                             if accuracy == 100
                                             else "text-orange"
                                         )
-                                        ui.label(f"准确率: {accuracy:.1f}%").classes(
-                                            accuracy_color
-                                        )
+                                        ui.label(
+                                            f"准确率: {accuracy:.1f}%"
+                                        ).classes(accuracy_color)
 
-                                        matched_count = details.get("matched_count", 0)
+                                        matched_count = details.get(
+                                            "matched_count", 0
+                                        )
                                         expected_count = details.get(
                                             "expected_count", 0
                                         )
@@ -521,34 +638,42 @@ class ConfigPage(ui.dialog):
                                         )
 
                                         # 显示详细的文件匹配情况
-                                        missing_files = details.get("missing_files", [])
-                                        extra_files = details.get("extra_files", [])
-                                        matched_files = details.get("matched_files", [])
+                                        missing_files = details.get(
+                                            "missing_files", []
+                                        )
+                                        extra_files = details.get(
+                                            "extra_files", []
+                                        )
+                                        matched_files = details.get(
+                                            "matched_files", []
+                                        )
 
                                         if matched_files:
                                             ui.label(
                                                 f"✅ 正确匹配 ({len(matched_files)}):"
                                             ).classes("text-green font-bold")
                                             for file_path in matched_files:
-                                                ui.label(f"  • {file_path}").classes(
-                                                    "text-sm text-green"
-                                                )
+                                                ui.label(
+                                                    f"  • {file_path}"
+                                                ).classes("text-sm text-green")
 
                                         if missing_files:
                                             ui.label(
                                                 f"❌ 遗漏文件 ({len(missing_files)}):"
                                             ).classes("text-red font-bold")
                                             for file_path in missing_files:
-                                                ui.label(f"  • {file_path}").classes(
-                                                    "text-sm text-red"
-                                                )
+                                                ui.label(
+                                                    f"  • {file_path}"
+                                                ).classes("text-sm text-red")
 
                                         if extra_files:
                                             ui.label(
                                                 f"⚠️ 多余文件 ({len(extra_files)}):"
                                             ).classes("text-orange font-bold")
                                             for file_path in extra_files:
-                                                ui.label(f"  • {file_path}").classes(
+                                                ui.label(
+                                                    f"  • {file_path}"
+                                                ).classes(
                                                     "text-sm text-orange"
                                                 )
 

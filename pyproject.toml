@@ -1,23 +1,32 @@
 [project]
 name = "Bangumi_Auto_Rename"
-version = "0.2.1"
-description = "Default template for PDM package"
-authors = [{ name = "KimigaiiWuyi", email = "444835641@qq.com" }]
+version = "0.3.0"
+description = "Jellyfin-first anime and TV episode renamer with Bangumi metadata"
+authors = [
+    { name = "KimigaiiWuyi", email = "444835641@qq.com" },
+    { name = "EunoiaCody" },
+]
+maintainers = [{ name = "EunoiaCody" }]
 dependencies = [
     "tmdbsimple>=2.9.1",
-    "jikanpy-v4>=1.0.2",
     "nicegui>=2.9.1",
-    "pywin32>=308",
+    "pywin32>=308; sys_platform == 'win32'",
     "structlog>=24.4.0",
     "frozenlist>=1.5.0",
     "openai>=1.54.0",
     "hachoir>=3.3.0",
     "google>=3.0.0",
     "google-genai>=0.8.0",
+    "requests>=2.32.0",
 ]
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = { text = "GPLv3" }
+
+[project.urls]
+Homepage = "https://github.com/EunoiaCody/Bangumi_Auto_Rename"
+Repository = "https://github.com/EunoiaCody/Bangumi_Auto_Rename"
+Upstream = "https://github.com/KimigaiiWuyi/Bangumi_Auto_Rename"
 
 
 [tool.pdm]
@@ -25,6 +34,11 @@ distribution = false
 
 [tool.pdm.scripts]
 start = "src.start"
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=8.0.0",
+]
 
 [[tool.pdm.source]]
 name = "TUNA"

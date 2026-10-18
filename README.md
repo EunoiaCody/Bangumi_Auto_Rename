@@ -1,166 +1,273 @@
-## 简介
+# Bangumi_Auto_Rename
 
-- 😣受不了动漫剧集的命名与Emby自动刮削格式不兼容？
+为 **Jellyfin** 设计的动漫 / 剧集 / 电影自动整理工具。
+动漫元数据优先来自 **Bangumi（bgm.tv）**，失败时回退 TMDB；根据元数据自动生成 Jellyfin 规范的目录结构与文件名。支持 qBittorrent 下载完成后自动整理，默认使用 **硬链接**，不影响做种。
 
-- 🥰本项目可以将**大部分**下载的剧集（包括动漫、电影、番剧等）转为Emby所需要的**文件结构**！
+[![Python](https://img.shields.io/badge/Python-%3E%3D3.10-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-GPL--3.0--or--later-green.svg)](LICENSE)
+[![Jellyfin](https://img.shields.io/badge/Jellyfin-first-00A4DC.svg)](https://jellyfin.org/)
+[![Bangumi](https://img.shields.io/badge/Metadata-Bangumi-F09199.svg)](https://bgm.tv/)
 
-- 🚀支持剪切、复制、**硬链接（默认）**三种**移动/重命名**方式！
+> 本项目是 [KimigaiiWuyi/Bangumi_Auto_Rename](https://github.com/KimigaiiWuyi/Bangumi_Auto_Rename) 的修改版，由 [EunoiaCody](https://github.com/EunoiaCody/Bangumi_Auto_Rename) 维护。原始版权归 KimigaiiWuyi 所有，修改版同样以 GPL-3.0-or-later 发布，详见 [NOTICE](NOTICE)。
 
-- ✨并且你可以通过简单的配置，让qBittorrent每次下载结束之后**自动执行转换！**
+## 特性
 
-- 🤖**AI识别功能**：支持OpenAI和Google Gemini双引擎，智能分析动漫文件映射关系，解决BD分集与TMDB数据不一致的问题！
+- **Jellyfin 优先**：`Series (Year)/Season 01/Series (Year) S01E01 - Title.ext`，特典进入 `Season 00`，OP/ED/PV 等进入 `extras/`。
+- **Bangumi 元数据优先**：支持搜索、季度关系链（前传 / 续集）、章节标题、SP / OP / ED 分类。
+- **TMDB 兜底**：Bangumi 不可用或无结果时自动回退 TMDB；非动漫内容始终使用 TMDB。
+- **qBittorrent 自动整理**：完成时触发 `/sendTask`，默认硬链接，绝不移动 / 删除做种文件。
+- **硬链接安全**：同盘直接硬链接；跨盘按配置复制 / 软链接 / 跳过，`copy` 为默认。
+- **重复触发抑制**：按 infohash + 路径去重，避免重复整理。
+- **复杂合集支持**：多季合集、剧场版、OVA、特典、外挂字幕。
+- **AI 辅助（可选）**：OpenAI 兼容 API / Google Gemini，用于 BD 分集与元数据分季不一致的情况。
+- **不生成 NFO / 图片**：本项目只负责“用元数据把文件放到正确位置、起正确名字”，刮削交给 Jellyfin。
 
-- 🥳支持复杂的目录结构！以VCB-Studio的**Re:从零开始的异世界生活**剧集合集为例：
+## 元数据 → 文件布局
 
-```shell
-├─[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu
-│  ├─[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu 2nd Season [Ma10p_1080p]
-│  ├─[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Hyouketsu no Kizuna [Ma10p_1080p]
-│  ├─[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu Memory Snow [Ma10p_1080p]
-│  ├─[VCB-Studio] Re Zero kara Hajimeru Isekai Seikatsu [Ma10p_1080p]
+| 元数据 | 输出 |
+|---|---|
+| `series.name` / `series.year` | `Series Name (Year)/` |
+| `season.season_number` | `Season 00`、`Season 01`、`Season 02` … |
+| `episode.episode_number` | `S01E01`、`S01E02` … |
+| `episode.title` | 文件名末尾 ` - 标题`（可配置语言 / 关闭） |
+| `episode.type = special` | `Season 00/Series (Year) S00E01 - 特典.ext` |
+| `episode.type = op/ed/pv/other` | `extras/` |
+| `movie.name` / `movie.year` | `Movie Name (Year)/Movie Name (Year).ext` |
+| 多文件电影（CD1/CD2） | `Movie Name (Year) - cd1.ext`、`- part1.ext` |
+| 外挂字幕 / 音轨 | 与新视频同名，保留 `.zh.ass`、`.en.srt` 等后缀 |
+
+示例：
+
+```text
+Anime/
+└── 葬送的芙莉莲 (2023)/
+    ├── Season 00/
+    │   └── 葬送的芙莉莲 (2023) S00E01 - OVA.mkv
+    ├── Season 01/
+    │   ├── 葬送的芙莉莲 (2023) S01E01 - 冒险的结束.mkv
+    │   ├── 葬送的芙莉莲 (2023) S01E01 - 冒险的结束.zh.ass
+    │   └── 葬送的芙莉莲 (2023) S01E02 - 未必是魔法.mkv
+    └── extras/
+        └── NCOP.mkv
+
+Movies/
+└── 铃芽之旅 (2022)/
+    └── 铃芽之旅 (2022).mkv
 ```
 
-可以看到大的集合里面同时包括以下**子文件夹**内容：第一季、第二季、电影冰结之绊、电影雪之回忆，而你只需要运行该程序，即可自动分门别类，**电影/番剧**会被格式化后**分别的**、正确的**复制/硬链接**到**你指定的文件夹**！
+## 工作原理
 
-## 实验性功能：AI识别
-
-🧠 **智能分析能力**
-- 自动识别字幕组的分季与TMDB官方分季的差异
-- 智能处理OVA、特典等特殊内容的归类
-- 根据视频时长判断内容类型（正片/特典/PV等）
-- 提供置信度评估，低置信度结果会单独记录
-
-🔧 **灵活配置选项**
-- **AI提供商选择**：OpenAI / Google Gemini
-- **OpenAI配置**：支持兼容API、多种输出格式、自定义模型
-- **Gemini配置**：原生API支持、高效结构化输出
-- **智能阈值**：可调节置信度阈值
-- **功能开关**：支持启用/禁用AI功能
-
-## 使用效果
-
-![1.png](https://s2.loli.net/2024/06/26/oe8jrEg7wqdtGZ1.png)
-
-![2.png](https://s2.loli.net/2024/06/26/8PmycWaSe3f6htC.png)
-
-## 使用方法
-
-### 零、申请你的API密钥
-
-#### TMDB API密钥
-- 进入[TMDB官网](https://www.themoviedb.org/settings/api)申请
-- 复制你的**API 密钥**，后续会用到
-
-#### AI API密钥（可选）
-- **OpenAI API**：申请OpenAI API密钥，或使用兼容的国内API服务
-  - 推荐模型：deepseek-reasoner（性价比高，效果好）
-  - 支持多种输出格式，兼容性强
-- **Google Gemini API**：申请Google AI Studio API密钥
-  - 推荐模型：gemini-2.5-flash（速度快，效果优秀）
-  - 原生结构化输出，解析更准确
-- 如不配置AI功能，程序将使用传统规则进行识别
-
-### 一、安装 (WEB版本)
-
-> [!IMPORTANT] 
->
-> WEB版本提高了易用性、和识别准确率, 但要求必须本机内存在git和python环境！
-
-- 确保存在Python环境（版本需要`>=3.9`）, Git环境。
-- 命令行执行
-  - `git clone https://github.com/KimigaiiWuyi/Bangumi_Auto_Rename.git -b web`
-  - `cd Bangumi_Auto_Rename`
-  - `pip install -r requirements.txt `
-
-- 启动
-  - `python -m src.start`
-
-
-![.jpg](https://s2.loli.net/2025/01/13/f56LsCtKhDm1Oky.jpg)
-
-### 二、使用
-
-- 打开网页之后（默认端口5999，即地址为`http://127.0.0.1:5999`）
-- 先点击右上角配置按钮，配置以下内容：
-  - **基础配置**：TMDB API密钥和各个整理路径
-  - **AI配置**（可选）：选择AI提供商、配置API密钥、选择模型等
-- 点击添加任务即可使用
-
-### 三、AI功能详细说明
-
-**注意：** 🚨 AI识别为实验性功能，请勿在**移动模式**中启用！！
-
-#### 配置AI功能
-1. 在配置页面的"AI识别配置"部分：
-   - **启用AI识别**：开启/关闭AI功能
-   - **AI提供商选择**：选择OpenAI或Google Gemini
-   - **置信度阈值**：设置结果采用的最低置信度要求
-
-2. **OpenAI配置**（选择OpenAI提供商时）：
-   - **API密钥**：填入你的OpenAI兼容API密钥
-   - **API地址**：默认为OpenAI官方URL，可改为其他兼容服务(一般以/v1结尾)
-   - **模型选择**：推荐使用Deepseek-R1(deepseek-reasoner)
-   - **输出格式**：选择Function Calling、JSON Object、Structured Output或Text
-   - **API测试**：一键测试当前API支持的功能特性
-
-3. **Google Gemini配置**（选择Gemini提供商时）：
-   - **API密钥**：填入你的Google AI Studio API密钥
-   - **API地址**：默认为AI Studio Gemini URL，可改为Vertex或其它兼容服务
-   - **模型选择**：推荐使用gemini-2.5-flash
-   - **原生结构化输出**：默认启用，无需额外配置
-
-#### AI识别优势
-- **智能映射**：自动分析本地文件与TMDB数据的对应关系
-- **特殊处理**：识别OVA、特典、剧场版等特殊内容
-- **时长分析**：根据视频时长匹配元数据
-- **置信度评估**：提供分析结果的可信度评分
-- **格式适配**：支持多种输出格式，确保最佳兼容性
-
-#### 注意事项
-- AI功能需要网络连接和API调用费用
-- 不同AI提供商的费用和速度有所差异
-- 低置信度结果会在日志中特别标记
-- 可以在编辑任务时选择是否使用AI识别
-- 如果AI分析失败，会自动回退到传统规则识别
-- 建议先使用API测试功能验证配置是否正确
-
-### 四、在qBittorrent下载完成后自动调用该程序
-
-> ⚠注意：箭头处的命令需要根据上面命令行自己写一下，照抄无效！（下面有提供示例）
-
-- 打开软件，**工具** -> **设置** -> 弹出窗口中找到**下载** -> 往下滚动 -> **Torrent完成时运行**
-- 根据自己的配置，写入命令，**应用**保存即可
-
-![image.png](https://s2.loli.net/2025/02/02/GfcTiNJXs4EFDWm.png)
-
-- 这里的命令相比于上面的命令行，需要做一些小的调整，首先一点是`path=`的输入，**一定**要用`"%F"`替换（上图可能是`%D`，那是错误的，不要关心图上的命令），这样就是每次种子实际下载的路径了
-- 一个是`tag=`的输入，**可以**用`"$G"`替换，代表着创建种子时候的标签，这里如果下载的是动漫剧集，需要带上`anime`的标签，如果是电影，带上`movie`的标签，方便自动整理到对应路径，如果无任何标签，是否是电影会**自动判断**，是否是动漫则**默认为否**，如果不需要处理，可以传入`no_process`的标签
-- 填入示例如下
-
-```shell
-curl --data-urlencode "path=%F" --data-urlencode "tag=%G" "http://127.0.0.1:5999/sendTask" -f
+```text
+本地路径
+  ↓ 清理发布组标签 / 年份 / 季集号
+Bangumi 搜索（动画，type=2）
+  ↓ 命中：读取条目 + 前传/续集关系链 + 章节
+  ↓ 未命中/不可用：TMDB 搜索与季度/剧集
+统一元数据（Series / Season / Episode）
+  ↓
+Jellyfin 命名（目录 + Season NN + SxxExx + 标题）
+  ↓
+硬链接（默认）/ 复制 / 剪切
 ```
 
-### 五、更新
+- **季号**：Bangumi 一个 subject 通常只对应一季，程序沿 `前传` / `续集` 关系链推导完整季度顺序。
+- **集号**：使用条目章节的 `ep`；`4.5` 等非整数集归入特典 / extras。
+- **标题来源**：`naming_title_source=auto` 时，若 TMDB 可用则优先使用 Jellyfin 更容易识别的 TMDB 标题，否则使用 Bangumi 中文名；可改为 `bangumi` 或 `tmdb`。
 
-- 进入文件夹内，`cd Bangumi_Auto_Rename`
-- 执行`git pull`
+## Jellyfin 配置
 
-## 需要注意的
+1. 新建 **Shows** 库，指向 `anime_path`（动漫剧集）和 `bangumi_path`（真人剧集）。
+2. 新建 **Movies** 库，指向 `anime_movie_path`（动漫电影）和 `movie_path`（真人电影）。
+3. 目录结构无需手动整理，程序会生成 `Series (Year)/Season NN/`。
+4. 特典放在 `Season 00`；OP/ED/PV/CM 放在 `extras/`，Jellyfin 会自动识别为 extras。
+5. **不生成 NFO**。若希望 Jellyfin 显示 Bangumi 的标题 / 简介，推荐安装第三方插件 [kookxiang/jellyfin-plugin-bangumi](https://github.com/kookxiang/jellyfin-plugin-bangumi)；未安装时 Jellyfin 默认刮 TMDB，建议保持 `naming_title_source=tmdb` 或 `auto`。
 
-- 该程序依靠**TMDB API**（因为Emby也是一样的，可以保证精准度），因此对**网络环境**有一定要求！
-- **AI功能**需要额外的API调用费用，但可以显著提高动漫识别准确率
-  - OpenAI API：官方按token计费，部分提供商有免费的Deepseek R1额度
-  - Google Gemini API：有免费额度，gemini-2.5-flash速度快
-  - 该功能仍在开发中，欢迎各位提供测试用例
-  - 如需提交AI功能相关的反馈，建议启用`自动保存AI分析`，会在每次AI识别时保存用例至`data/ai_analysis`目录
-- 该程序更加适用于动画剧集的重命名，对于电影、剧集，本身Emby的刮削足够精准了。
-- 识别率并不是100%，如果有识别错误的，带上截图，提Issues！反馈时最好将日志等级调为DEBUG，并提供详细日志。
-- 该程序使用情况覆盖了很多，但是像是非常复杂的情况，例如**物语系列**这种重量级剧集（加上TMDB对于物语系列的剧集分类，非常的复杂），请不要使用本程序
-- 如果已经使用了本程序刮削错误的情况，因为默认是**硬链接**模式，所以直接删除目标文件夹的对应文件即可，不会影响到源文件！
-- 有任何使用上的问题或者建议都可以提Issues，尽力解答！
+## 安装
 
-- 如果本插件对你有帮助，不要忘了点个Star~
-- 本项目仅供学习使用，请勿用于商业用途
-- [爱发电](https://afdian.com/a/KimigaiiWuyi)
-- [GPL-3.0 License](https://github.com/KimigaiiWuyi/Bangumi_Auto_Rename/blob/main/LICENSE) ©[@KimigaiiWuyi](https://github.com/KimigaiiWuyi)
+### 方式一：Python Web 版（推荐）
+
+要求 Python `>=3.10` 与 Git。
+
+```bash
+git clone https://github.com/EunoiaCody/Bangumi_Auto_Rename.git -b web
+cd Bangumi_Auto_Rename
+
+# Linux / macOS
+pip install -r requirements_docker.txt
+
+# Windows
+pip install -r requirements.txt
+
+# 或使用 PDM
+pdm install
+```
+
+启动：
+
+```bash
+python -m src.start
+# 或
+pdm start
+```
+
+打开 `http://127.0.0.1:5999`。
+
+### 方式二：Docker
+
+```bash
+docker build -t bangumi-auto-rename .
+
+docker run -d --name bangumi-auto-rename \
+  -p 5999:5999 \
+  -v /host/media:/media \
+  -v /host/bangumi-data:/Bangumi_Auto_Rename/data \
+  bangumi-auto-rename
+```
+
+- 将下载目录与媒体库挂载到容器内，建议都放在 `/media` 下，便于硬链接。
+- `data/` 保存配置、任务记录、日志与缓存，务必持久化。
+- 容器内 `docker_mnt` 默认为 `/media`，可在配置页修改。
+
+## 配置
+
+启动后点击右上角 **配置**。配置保存在 `data/config.json`，旧配置会自动补齐新键。
+
+### 基础
+
+| 键 | 默认值 | 说明 |
+|---|---|---|
+| `api_key` | 空 | TMDB API Key，用于兜底与非动漫内容 |
+| `anime_path` | 空 | 动漫剧集库路径 |
+| `bangumi_path` | 空 | 真人剧集库路径 |
+| `anime_movie_path` | 空 | 动漫电影库路径 |
+| `movie_path` | 空 | 真人电影库路径 |
+| `mode` | `链接` | `链接` / `复制` / `剪切` |
+| `metadata_source` | `bangumi` | `bangumi` 优先，或 `tmdb` |
+| `naming_title_source` | `auto` | `auto` / `bangumi` / `tmdb` |
+| `rename_style` | `jellyfin` | `jellyfin` 或兼容旧格式的 `legacy` |
+| `filename_title_language` | `zh` | `zh` / `ja` / `none` |
+| `docker_mnt` | `/media` | Docker 文件选择器根目录 |
+| `log_level` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
+
+### Bangumi
+
+| 键 | 默认值 | 说明 |
+|---|---|---|
+| `bangumi_access_token` | 空 | 可选；公开数据无需令牌 |
+| `bangumi_base_url` | `https://api.bgm.tv` | API 地址 |
+| `bangumi_user_agent` | 空 | 可选；留空使用内置 UA |
+
+### qBittorrent
+
+| 键 | 默认值 | 说明 |
+|---|---|---|
+| `qb_safe_mode` | `true` | 强制硬链接，禁止剪切，保护做种 |
+| `qb_link_fallback` | `copy` | 跨盘时 `copy` / `symlink` / `skip` |
+| `qb_category_anime` | `anime` | qB 分类映射为动漫 |
+| `qb_category_movie` | `movie` | qB 分类映射为电影 |
+| `qb_category_ignore` | `no_process` | 忽略的分类 |
+
+### AI（可选）
+
+- `ai_enabled`：启用 AI 识别。
+- `ai_provider`：`openai` 或 `gemini`。
+- OpenAI：`ai_api_key`、`ai_base_url`、`ai_model`、`ai_temperature`、`openai_output_format`。
+- Gemini：`gemini_api_key`、`gemini_base_url`、`gemini_model`、`gemini_temperature`。
+- `ai_confidence_threshold`：`High` / `Medium` / `Low`。
+- `ai_auto_save`：保存分析 JSON 到 `data/ai_analysis/`。
+
+> ⚠️ AI 识别为实验性功能，**不要在 `剪切` 模式下启用**；qBittorrent 安全模式会强制 `链接`。
+
+## 使用
+
+1. 打开 Web UI，先完成配置。
+2. 点击 **添加任务**，选择下载完成的目录或单个视频。
+3. 任务进入队列；表格显示“排队中 / 处理中 / 成功 / 失败”。
+4. 失败任务可 **重试**；也可 **编辑** 识别名称、季度、Bangumi 条目 ID 后重新处理。
+5. 删除任务只删除 `data/task` 与 `data/record` 记录，不会删除媒体文件。
+
+### 手动指定 Bangumi 条目
+
+如果自动匹配错误，可在任务编辑页填写 **Bangumi 条目 ID**（`https://bgm.tv/subject/XXXX` 中的数字），重新处理即可强制使用该条目。
+
+## qBittorrent 自动整理
+
+qBittorrent → **工具 → 设置 → 下载 → Torrent 完成时运行**：
+
+```bash
+curl -s --data-urlencode "path=%F" \
+     --data-urlencode "tags=%G" \
+     --data-urlencode "category=%L" \
+     --data-urlencode "hash=%I" \
+     --data-urlencode "name=%N" \
+     "http://127.0.0.1:5999/sendTask"
+```
+
+- `%F`：种子内容路径（文件或根目录）。
+- `%G`：标签；包含 `anime`、`动漫`、`动画`、`bangumi` 时按动漫处理，`movie`、`电影`、`剧场版` 按电影处理。
+- `%L`：分类；可在配置页映射。
+- `%I`：infohash，用于重复触发去重。
+- `%N`：种子名称，作为 `path` 缺失时的兜底。
+- 需要忽略某个种子时，加 `no_process` 标签。
+
+**做种安全**：
+
+- 默认 `qb_safe_mode=true`，即使全局模式是 `剪切`，qB 触发也强制 `链接`。
+- 源文件只读，不会被重命名或删除。
+- 同盘硬链接；跨盘按 `qb_link_fallback` 回退，默认复制。
+- 目标已存在时跳过，不覆盖。
+- 过滤 `.part`、`.!qB`、`_____padding_file_` 等未完成 / 临时文件。
+- 多个种子同时完成时进入单线程队列，避免同一剧集目录竞争。
+
+## AI 识别说明
+
+- 支持 OpenAI 兼容接口与 Google Gemini。
+- 推荐模型：`deepseek-reasoner`（OpenAI 兼容）或 `gemini-2.5-flash`（Gemini）。
+- OpenAI 输出格式：`function_calling`（最稳定）/ `json_object` / `structured_output` / `text`。
+- AI 结果字段已统一为 `season` / `episode`，旧版 `tmdb_season` / `tmdb_episode` 分析文件仍可读取。
+- 低置信度结果会记录到日志；AI 失败或无有效映射时自动回退传统流程。
+
+## 常见问题
+
+**Q：需要 TMDB Key 吗？**
+A：只看动漫时，Bangumi 公开接口即可工作；建议仍配置 TMDB Key，用于兜底、动漫电影标题与非动漫内容。
+
+**Q：Jellyfin 显示的标题和文件名不一致？**
+A：本项目不生成 NFO。Jellyfin 默认使用 TMDB 刮削；可将 `naming_title_source` 设为 `tmdb`/`auto`，或安装 Bangumi 插件。若使用插件，设为 `bangumi`。
+
+**Q：硬链接失败 / 跨盘？**
+A：硬链接要求源与目标在同一文件系统。跨盘时按 `qb_link_fallback` 处理，默认复制；也可改为 `symlink` 或 `skip`。建议把下载目录和媒体库放在同一磁盘。
+
+**Q：Bangumi 搜索不到 / 匹配错误？**
+A：在任务编辑页填写 Bangumi 条目 ID 强制指定；或把 `metadata_source` 改为 `tmdb`。日志级别设为 `DEBUG` 可查看候选打分。
+
+**Q：qBittorrent 重复触发怎么办？**
+A：程序按 infohash + 路径去重，已成功任务直接跳过；需要强制重跑时在请求中加 `force=1`。
+
+**Q：会生成 NFO / 海报吗？**
+A：不会。只创建目录、视频与同名外挂字幕/音轨的硬链接或副本。
+
+**Q：旧版本目录会被覆盖吗？**
+A：不会覆盖已存在目标。默认 `rename_style=jellyfin` 会生成新命名；需要旧格式时切换为 `legacy`。
+
+## 开发与测试
+
+```bash
+python -m compileall src
+pytest tests -q
+python -m src.start
+```
+
+- 测试用例：`tests/test_naming.py`、`tests/test_bangumi_provider.py`、`tests/test_resolver.py`、`tests/test_qbittorrent_payload.py`、`tests/test_transfer.py`、`tests/test_process_layout.py`。
+- AI 手动测试：`python tests/test_ai_recognition.py --mode manual --path ...`，详见 [tests/README_AI_Testing.md](tests/README_AI_Testing.md)。
+- 开发说明：[AGENTS.md](AGENTS.md)。
+
+## 版权与致谢
+
+- 原始项目：[KimigaiiWuyi/Bangumi_Auto_Rename](https://github.com/KimigaiiWuyi/Bangumi_Auto_Rename)
+- 原始作者：**KimigaiiWuyi** <444835641@qq.com>
+- 修改版维护：[EunoiaCody](https://github.com/EunoiaCody/Bangumi_Auto_Rename)
+- 许可证：[GPL-3.0-or-later](LICENSE)（`LICENSE` 原文未修改）
+- 修改说明见 [NOTICE](NOTICE)。
+
+本项目仅供学习与个人媒体库整理使用，请勿用于商业用途。

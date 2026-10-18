@@ -47,7 +47,9 @@ class DataInput:
         self.search = Search()
         self.video_analyzer = VideoAnalyzer()
 
-    def load_from_json(self, input_file: str) -> Optional[Tuple[dict, dict, list]]:
+    def load_from_json(
+        self, input_file: str
+    ) -> Optional[Tuple[dict, dict, list]]:
         """从JSON文件加载测试数据，返回(metadata, anime_info, local_files)"""
         input_path = Path(input_file)
         if not input_path.exists():
@@ -94,9 +96,9 @@ class DataInput:
 
     def load_from_path(self, path: Path) -> Optional[Tuple[dict, dict, list]]:
         """从文件系统路径分析获取测试数据，返回(metadata, anime_info, local_files)"""
-        # 检查TMDB配置
-        if not self.search.TMDB_KEY:
-            print("❌ 错误：未配置TMDB API密钥")
+        # 检查元数据源配置
+        if not self.search.has_required_config():
+            print("❌ 错误：未配置可用的元数据源（Bangumi/TMDB）")
             return None
 
         # 收集视频文件
@@ -119,7 +121,9 @@ class DataInput:
 
         # 分析视频文件
         print("\n🔍 分析视频文件...")
-        file_analysis = self.video_analyzer.analyze_video_files(path, video_files)
+        file_analysis = self.video_analyzer.analyze_video_files(
+            path, video_files
+        )
 
         # 构建metadata
         path_name = path.name
@@ -129,7 +133,8 @@ class DataInput:
             "anime_name": name,
             "description": f"测试用例：{name}",
             "file_count": len(video_files),
-            "total_size_mb": sum(f["size"] for f in file_analysis) / (1024 * 1024),
+            "total_size_mb": sum(f["size"] for f in file_analysis)
+            / (1024 * 1024),
         }
 
         return metadata, tv_info, file_analysis
@@ -163,7 +168,9 @@ class DataInput:
         # 搜索动漫信息
         name, tv_info = self.search.get_tv_info_with_seasons(rtpath_name, year)
         if not name and year != 0:
-            name, tv_info = self.search.get_tv_info_with_seasons(rtpath_name, 0)
+            name, tv_info = self.search.get_tv_info_with_seasons(
+                rtpath_name, 0
+            )
 
         return name, tv_info
 
@@ -172,7 +179,9 @@ class DataProcessor:
     """数据处理模块 - 负责AI分析和用户交互"""
 
     def __init__(
-        self, provider: Optional[str] = None, openai_output_format: Optional[str] = None
+        self,
+        provider: Optional[str] = None,
+        openai_output_format: Optional[str] = None,
     ):
         # 临时修改配置
         self.original_provider = None
@@ -192,7 +201,9 @@ class DataProcessor:
         if openai_output_format is not None:
             self.original_output_format = cm.get_config("openai_output_format")
             cm.set_config("openai_output_format", openai_output_format)
-            logger.info(f"[测试] 临时设置OpenAI输出格式为: {openai_output_format}")
+            logger.info(
+                f"[测试] 临时设置OpenAI输出格式为: {openai_output_format}"
+            )
 
         self.ai_client = AIClient()
 
@@ -228,7 +239,9 @@ class DataProcessor:
 
         # 根据AI提供商添加特定指令
         if self.ai_client.provider == "gemini":
-            full_prompt = self.ai_client._client._add_gemini_instructions(base_prompt)
+            full_prompt = self.ai_client._client._add_gemini_instructions(
+                base_prompt
+            )
         else:
             full_prompt = self.ai_client._client._add_openai_json_instructions(
                 base_prompt
@@ -284,23 +297,27 @@ class DataProcessor:
             print("❌ JSON解析失败")
             print("原始响应:")
             print(
-                llm_response[:500] + "..." if len(llm_response) > 500 else llm_response
+                llm_response[:500] + "..."
+                if len(llm_response) > 500
+                else llm_response
             )
 
         return ai_result
 
-    def _parse_manual_response(self, response: str) -> Optional[AIAnalysisResult]:
+    def _parse_manual_response(
+        self, response: str
+    ) -> Optional[AIAnalysisResult]:
         """解析手动输入的LLM响应"""
         try:
             # 尝试直接解析JSON
-            if response.strip().startswith('{'):
+            if response.strip().startswith("{"):
                 json_data = json.loads(response)
                 return AIAnalysisResult(**json_data)
 
             # 尝试提取JSON部分
             import re
 
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 json_str = json_match.group()
                 json_data = json.loads(json_str)
@@ -322,7 +339,7 @@ class DataProcessor:
         print(f"  - AI启用状态: {cm.get_config('ai_enabled')}")
         print(f"  - AI提供商: {cm.get_config('ai_provider')}")
 
-        if cm.get_config('ai_provider') == 'gemini':
+        if cm.get_config("ai_provider") == "gemini":
             print(
                 f"  - Gemini API密钥: {'已配置' if cm.get_config('gemini_api_key') else '未配置'}"
             )
@@ -334,7 +351,9 @@ class DataProcessor:
             )
             print(f"  - OpenAI API地址: {cm.get_config('ai_base_url')}")
             print(f"  - OpenAI 模型: {cm.get_config('ai_model')}")
-            print(f"  - OpenAI 输出格式: {cm.get_config('openai_output_format')}")
+            print(
+                f"  - OpenAI 输出格式: {cm.get_config('openai_output_format')}"
+            )
 
 
 class DataSaver:
@@ -348,7 +367,7 @@ class DataSaver:
         output_file: str = None,
     ):
         """保存测试用例"""
-        path_name = metadata.get('path_name', 'unknown')
+        path_name = metadata.get("path_name", "unknown")
 
         # 如果没有指定输出文件，使用默认命名
         if not output_file:
@@ -379,7 +398,9 @@ class DataSaver:
                 else " (时长未知)"
             )
             size_mb = file_info["size"] / (1024 * 1024)
-            print(f"  {i}. {file_info['filename']}{duration_str} [{size_mb:.1f}MB]")
+            print(
+                f"  {i}. {file_info['filename']}{duration_str} [{size_mb:.1f}MB]"
+            )
 
     def save_test_result(
         self,
@@ -393,11 +414,11 @@ class DataSaver:
         result_file: str = None,
     ):
         """保存测试结果，格式与测试用例保持一致，analysis_result直接加在最后"""
-        path_name = metadata.get('path_name', 'unknown')
+        path_name = metadata.get("path_name", "unknown")
 
         # 如果没有指定结果文件，使用默认命名
         if not result_file:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             result_file = f"{mode}_{path_name}_{provider}_{timestamp}.json"
 
         # 构建结果数据，格式与测试用例一致，analysis_result直接加在最后
@@ -423,7 +444,11 @@ class DataSaver:
         return output_path
 
     def display_test_info(
-        self, metadata: dict, anime_info: dict, local_files: list, provider: str
+        self,
+        metadata: dict,
+        anime_info: dict,
+        local_files: list,
+        provider: str,
     ):
         """显示测试信息"""
         print(f"📁 测试用例: {metadata.get('description', '未知')}")
@@ -456,7 +481,9 @@ class DataSaver:
                 else " (时长未知)"
             )
             size_mb = file_info["size"] / (1024 * 1024)
-            print(f"  {i}. {file_info['filename']}{duration_str} [{size_mb:.1f}MB]")
+            print(
+                f"  {i}. {file_info['filename']}{duration_str} [{size_mb:.1f}MB]"
+            )
 
     def analyze_and_display_result(
         self, ai_result: AIAnalysisResult, local_files: list
@@ -477,7 +504,7 @@ class DataSaver:
             print(f"\n🗂️ 季度映射 ({len(ai_result.season_mapping)}个):")
             for sm in ai_result.season_mapping:
                 print(
-                    f"  - 本地组 '{sm.local_group_name}' -> TMDB季度 {sm.maps_to_tmdb_seasons}"
+                    f"  - 本地组 '{sm.local_group_name}' -> 元数据季度 {sm.maps_to_seasons}"
                 )
 
         # 显示文件映射
@@ -495,7 +522,7 @@ class DataSaver:
 
                 print(f"  {i}. {mapping.file_path}")
                 print(
-                    f"     -> S{mapping.tmdb_season:02d}E{mapping.tmdb_episode:02d} {type_icon} {mapping.episode_type}"
+                    f"     -> S{mapping.season:02d}E{mapping.episode:02d} {type_icon} {mapping.episode_type}"
                 )
                 print(f"     {confidence_icon} 置信度: {mapping.confidence}")
 
@@ -511,32 +538,40 @@ class DataSaver:
         print(f"🎯 AI映射文件数: {mapping_analysis['ai_mapped_count']}")
         print(f"✅ 映射准确率: {mapping_analysis['mapping_accuracy']:.1%}")
 
-        if mapping_analysis['successfully_mapped']:
+        if mapping_analysis["successfully_mapped"]:
             print(
                 f"\n✅ 成功映射的文件 ({len(mapping_analysis['successfully_mapped'])}个):"
             )
             for i, path in enumerate(
-                sorted(mapping_analysis['successfully_mapped']), 1
+                sorted(mapping_analysis["successfully_mapped"]), 1
             ):
                 print(f"  {i}. {path}")
 
-        if mapping_analysis['missed_by_ai']:
-            print(f"\n❌ AI遗漏的文件 ({len(mapping_analysis['missed_by_ai'])}个):")
-            for i, path in enumerate(sorted(mapping_analysis['missed_by_ai']), 1):
+        if mapping_analysis["missed_by_ai"]:
+            print(
+                f"\n❌ AI遗漏的文件 ({len(mapping_analysis['missed_by_ai'])}个):"
+            )
+            for i, path in enumerate(
+                sorted(mapping_analysis["missed_by_ai"]), 1
+            ):
                 print(f"  {i}. {path}")
 
-        if mapping_analysis['ai_generated_extra']:
+        if mapping_analysis["ai_generated_extra"]:
             print(
                 f"\n⚠️  AI生成的额外路径 ({len(mapping_analysis['ai_generated_extra'])}个):"
             )
-            for i, path in enumerate(sorted(mapping_analysis['ai_generated_extra']), 1):
+            for i, path in enumerate(
+                sorted(mapping_analysis["ai_generated_extra"]), 1
+            ):
                 print(f"  {i}. {path}")
 
         if (
-            not mapping_analysis['missed_by_ai']
-            and not mapping_analysis['ai_generated_extra']
+            not mapping_analysis["missed_by_ai"]
+            and not mapping_analysis["ai_generated_extra"]
         ):
-            print("\n🎉 完美映射！所有文件都被正确识别，没有遗漏或多余的路径。")
+            print(
+                "\n🎉 完美映射！所有文件都被正确识别，没有遗漏或多余的路径。"
+            )
 
         return mapping_analysis
 
@@ -561,7 +596,9 @@ class DataSaver:
         # 分析映射情况
         mapped_files = original_paths & ai_mapped_paths  # 被AI成功映射的文件
         missed_files = original_paths - ai_mapped_paths  # 被AI遗漏的文件
-        extra_files = ai_mapped_paths - original_paths  # AI生成但原始文件中不存在的路径
+        extra_files = (
+            ai_mapped_paths - original_paths
+        )  # AI生成但原始文件中不存在的路径
 
         return {
             "original_file_count": len(original_paths),
@@ -570,7 +607,9 @@ class DataSaver:
             "missed_by_ai": list(missed_files),
             "ai_generated_extra": list(extra_files),
             "mapping_accuracy": (
-                len(mapped_files) / len(original_paths) if original_paths else 0
+                len(mapped_files) / len(original_paths)
+                if original_paths
+                else 0
             ),
         }
 
@@ -579,7 +618,9 @@ class AIRecognitionTester:
     """AI识别测试器 - 重构版本，使用模块化设计"""
 
     def __init__(
-        self, provider: Optional[str] = None, openai_output_format: Optional[str] = None
+        self,
+        provider: Optional[str] = None,
+        openai_output_format: Optional[str] = None,
     ):
         self.data_input = DataInput()
         self.data_processor = DataProcessor(provider, openai_output_format)
@@ -601,7 +642,9 @@ class AIRecognitionTester:
         # 数据处理：save模式跳过
 
         # 数据保存：保存测试用例
-        self.data_saver.save_test_case(metadata, anime_info, local_files, output_file)
+        self.data_saver.save_test_case(
+            metadata, anime_info, local_files, output_file
+        )
 
     def manual_mode(self, path: Path):
         """手动模式：生成prompt供用户测试"""
@@ -618,7 +661,10 @@ class AIRecognitionTester:
 
         # 显示测试信息
         self.data_saver.display_test_info(
-            metadata, anime_info, local_files, self.data_processor.ai_client.provider
+            metadata,
+            anime_info,
+            local_files,
+            self.data_processor.ai_client.provider,
         )
 
         # 数据处理：手动模式，包含用户交互
@@ -657,7 +703,10 @@ class AIRecognitionTester:
 
         # 显示测试信息
         self.data_saver.display_test_info(
-            metadata, anime_info, local_files, self.data_processor.ai_client.provider
+            metadata,
+            anime_info,
+            local_files,
+            self.data_processor.ai_client.provider,
         )
 
         # 数据处理：自动模式
@@ -696,7 +745,10 @@ class AIRecognitionTester:
 
         # 显示测试信息
         self.data_saver.display_test_info(
-            metadata, anime_info, local_files, self.data_processor.ai_client.provider
+            metadata,
+            anime_info,
+            local_files,
+            self.data_processor.ai_client.provider,
         )
 
         # 数据处理：手动模式，包含用户交互
@@ -735,7 +787,10 @@ class AIRecognitionTester:
 
         # 显示测试信息
         self.data_saver.display_test_info(
-            metadata, anime_info, local_files, self.data_processor.ai_client.provider
+            metadata,
+            anime_info,
+            local_files,
+            self.data_processor.ai_client.provider,
         )
 
         # 数据处理：自动模式
@@ -793,6 +848,20 @@ def main():
     parser.add_argument("--path", help="要测试的动漫文件路径")
 
     parser.add_argument(
+        "--metadata-source",
+        choices=["bangumi", "tmdb"],
+        default="bangumi",
+        help="动漫元数据源（默认 bangumi）",
+    )
+
+    parser.add_argument(
+        "--naming-title-source",
+        choices=["auto", "bangumi", "tmdb"],
+        default="auto",
+        help="标题来源（默认 auto）",
+    )
+
+    parser.add_argument(
         "--provider",
         choices=["openai", "gemini"],
         help="AI提供商选择 (openai 或 gemini)，不指定则使用配置中的默认值",
@@ -800,14 +869,22 @@ def main():
 
     parser.add_argument(
         "--openai_output_format",
-        choices=["function_calling", "json_object", "structured_output", "text"],
+        choices=[
+            "function_calling",
+            "json_object",
+            "structured_output",
+            "text",
+        ],
         help="OpenAI输出格式选择，支持: function_calling, json_object, structured_output, text",
     )
 
-    parser.add_argument("--output", help="保存测试用例的文件路径 (save模式必需)")
+    parser.add_argument(
+        "--output", help="保存测试用例的文件路径 (save模式必需)"
+    )
 
     parser.add_argument(
-        "--input", help="测试用例JSON文件路径 (与--path二选一，同时指定时优先使用)"
+        "--input",
+        help="测试用例JSON文件路径 (与--path二选一，同时指定时优先使用)",
     )
 
     args = parser.parse_args()
@@ -833,6 +910,10 @@ def main():
             print(f"❌ 错误：路径不存在: {path}")
             return
         input_file = None
+
+    # 应用元数据源设置
+    cm.set_config("metadata_source", args.metadata_source)
+    cm.set_config("naming_title_source", args.naming_title_source)
 
     # 创建测试器
     tester = AIRecognitionTester(

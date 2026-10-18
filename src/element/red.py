@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 from typing import Any, Dict, List, Union, Literal, Optional
 
 from nicegui import ui
@@ -11,8 +14,8 @@ from nicegui.events import (
 from .color import MAINC
 
 ARG_MAP = {
-    'close_button': 'closeBtn',
-    'multi_line': 'multiLine',
+    "close_button": "closeBtn",
+    "multi_line": "multiLine",
 }
 
 
@@ -20,26 +23,26 @@ def notify(
     message: Any,
     *,
     position: Literal[
-        'top-left',
-        'top-right',
-        'bottom-left',
-        'bottom-right',
-        'top',
-        'bottom',
-        'left',
-        'right',
-        'center',
-    ] = 'top',
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "top",
+        "bottom",
+        "left",
+        "right",
+        "center",
+    ] = "top",
     close_button: Union[bool, str] = False,
     type: Optional[
         Literal[  # pylint: disable=redefined-builtin
-            'positive',
-            'negative',
-            'warning',
-            'info',
-            'ongoing',
+            "positive",
+            "negative",
+            "warning",
+            "info",
+            "ongoing",
         ]
-    ] = 'warning',
+    ] = "warning",
     color: Optional[str] = None,
     multi_line: bool = False,
     **kwargs: Any,
@@ -47,18 +50,18 @@ def notify(
     options = {
         ARG_MAP.get(key, key): value
         for key, value in locals().items()
-        if key != 'kwargs' and value is not None
+        if key != "kwargs" and value is not None
     }
-    options['message'] = str(message)
+    options["message"] = str(message)
     options.update(kwargs)
     client = context.client
-    client.outbox.enqueue_message('notify', options, client.id)
+    client.outbox.enqueue_message("notify", options, client.id)
 
 
 class RedDropDownButton(ui.dropdown_button):
     def __init__(
         self,
-        text: str = '',
+        text: str = "",
         *,
         value: bool = False,
         on_value_change: Optional[Handler[ValueChangeEventArguments]] = None,
@@ -77,13 +80,13 @@ class RedDropDownButton(ui.dropdown_button):
             auto_close=auto_close,
             split=split,
         )
-        self._props['rounded'] = True
+        self._props["rounded"] = True
 
 
 class RedButton(ui.button):
     def __init__(self, text: str, on_click=None, icon=None):
         super().__init__(text, on_click=on_click, icon=icon, color=MAINC)
-        self._props['rounded'] = True
+        self._props["rounded"] = True
 
 
 class RedToogle(ui.toggle):
@@ -101,7 +104,7 @@ class RedToogle(ui.toggle):
             on_change=on_change,
             clearable=clearable,
         )
-        self._props['toggle-color'] = MAINC
-        self._props['no-wrap'] = True
-        self._props['stack'] = True
-        self._props['spread'] = False
+        self._props["toggle-color"] = MAINC
+        self._props["no-wrap"] = True
+        self._props["stack"] = True
+        self._props["spread"] = False

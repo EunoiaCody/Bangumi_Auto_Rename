@@ -1,6 +1,9 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2024 KimigaiiWuyi
+# Copyright (C) 2025 EunoiaCody
 import json
-from urllib.parse import urlparse
 from typing import Any, Dict, Union
+from urllib.parse import urlparse
 
 from ..utils.path import CONFIG_PATH
 
@@ -12,6 +15,18 @@ CONFIG_DEFAULT = {
     "anime_movie_path": "",
     "mode": "链接",
     "docker_mnt": "/media",
+    "metadata_source": "bangumi",
+    "naming_title_source": "auto",
+    "rename_style": "jellyfin",
+    "filename_title_language": "zh",
+    "bangumi_access_token": "",
+    "bangumi_base_url": "https://api.bgm.tv",
+    "bangumi_user_agent": "",
+    "qb_safe_mode": True,
+    "qb_link_fallback": "copy",
+    "qb_category_anime": "anime",
+    "qb_category_movie": "movie",
+    "qb_category_ignore": "no_process",
     "ai_provider": "openai",
     "ai_api_key": "",
     "ai_base_url": "https://api.openai.com/v1",
@@ -29,13 +44,25 @@ CONFIG_DEFAULT = {
 }
 
 CN_MAP = {
-    "api_key": "🔑 TMDB API密钥",
+    "api_key": "🔑 TMDB API密钥（兜底/非动漫）",
     "bangumi_path": "🎬 电视剧路径",
     "movie_path": "🎬 电影路径",
     "anime_path": "🎬 动漫路径",
     "anime_movie_path": "🎬 动漫电影路径",
     "mode": "💿 重命名模式",
     "docker_mnt": "📁 Docker挂载路径",
+    "metadata_source": "🧭 动漫元数据源",
+    "naming_title_source": "🏷️ 标题来源",
+    "rename_style": "📐 命名风格",
+    "filename_title_language": "🗣️ 文件名标题语言",
+    "bangumi_access_token": "🅱️ Bangumi访问令牌",
+    "bangumi_base_url": "🌐 Bangumi API地址",
+    "bangumi_user_agent": "🪪 Bangumi User-Agent",
+    "qb_safe_mode": "🛡️ qBittorrent安全模式",
+    "qb_link_fallback": "🔗 跨盘回退方式",
+    "qb_category_anime": "🏷️ qB动漫分类",
+    "qb_category_movie": "🏷️ qB电影分类",
+    "qb_category_ignore": "🏷️ qB忽略分类",
     "ai_provider": "🤖 AI提供商",
     "ai_api_key": "🤖 OpenAI API密钥",
     "ai_base_url": "🌐 OpenAI API地址",
@@ -56,19 +83,19 @@ CN_MAP = {
 class ConfigManager:
     def __init__(self) -> None:
         if not CONFIG_PATH.exists():
-            with open(CONFIG_PATH, 'w', encoding='UTF-8') as file:
+            with open(CONFIG_PATH, "w", encoding="UTF-8") as file:
                 json.dump(CONFIG_DEFAULT, file, indent=4, ensure_ascii=False)
 
         self.update_config()
 
     def write_config(self):
         # 使用缓存文件避免强行关闭造成文件损坏
-        temp_file_path = CONFIG_PATH.parent / f'{CONFIG_PATH.name}.bak'
+        temp_file_path = CONFIG_PATH.parent / f"{CONFIG_PATH.name}.bak"
 
         if temp_file_path.exists():
             temp_file_path.unlink()
 
-        with open(temp_file_path, 'w', encoding='UTF-8') as file:
+        with open(temp_file_path, "w", encoding="UTF-8") as file:
             json.dump(self.config, file, indent=4, ensure_ascii=False)
 
         CONFIG_PATH.unlink()
@@ -76,7 +103,7 @@ class ConfigManager:
 
     def update_config(self):
         # 打开config.json
-        with open(CONFIG_PATH, 'r', encoding='UTF-8') as f:
+        with open(CONFIG_PATH, "r", encoding="UTF-8") as f:
             self.config: Dict[str, Any] = json.load(f)
         # 对没有的值，添加默认值
         for key in CONFIG_DEFAULT:
@@ -94,19 +121,19 @@ class ConfigManager:
         # 重新写回
         self.write_config()
 
-    def get_config(self, key: str) -> str:
+    def get_config(self, key: str) -> Any:
         if key in self.config:
             return self.config[key]
         elif key in CONFIG_DEFAULT:
             self.update_config()
             return self.config[key]
         else:
-            return ''
+            return ""
 
     def set_config(self, key: str, value: Union[str, bool]) -> bool:
         if key in CONFIG_DEFAULT:
             # 对URL类型的配置项进行特殊处理
-            if key.endswith('_base_url') and value and isinstance(value, str):
+            if key.endswith("_base_url") and value and isinstance(value, str):
                 value = self._normalize_url(value)
 
             # 设置值
@@ -131,11 +158,11 @@ class ConfigManager:
             return url
 
         # 去除结尾的斜杠
-        url = url.rstrip('/')
+        url = url.rstrip("/")
 
         # 如果没有协议，默认添加https
-        if not url.startswith(('http://', 'https://')):
-            url = 'https://' + url
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
 
         # 验证URL格式
         try:
@@ -163,7 +190,7 @@ class ConfigManager:
 
         try:
             parsed = urlparse(url)
-            return bool(parsed.netloc and parsed.scheme in ('http', 'https'))
+            return bool(parsed.netloc and parsed.scheme in ("http", "https"))
         except Exception:
             return False
 
